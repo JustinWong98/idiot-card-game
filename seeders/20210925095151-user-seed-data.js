@@ -31,6 +31,20 @@ module.exports = {
         created_at: new Date(),
         updated_at: new Date(),
       },
+      {
+        email: 'justin@gmail.com',
+        password: `${getHash('password3')}`,
+        username: 'justinW',
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      {
+        email: 'bob@gmail.com',
+        password: `${getHash('password4')}`,
+        username: 'b0b',
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
     ];
     try {
       const result = await queryInterface.bulkInsert('users', userData);

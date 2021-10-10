@@ -111,54 +111,15 @@ const makeDeck = function () {
 export default function initGamesController(db) {
   const { Op } = db.Sequelize;
   // render the main page
-  const index = (request, response) => {
-    response.render('games/index');
+
+  const index = async (req, res) => {
+    try{
+    res.render('game');
+    }
+    catch (error) {
+      res.send(error);
+    }
   };
-
-  const invite = (req, res) => {
-    const player1ID = req.cookies.id
-    const playerCount = req.body.playerCount
-    let noPlayerValue = ''
-    if (req.body.addBots === true) {
-      noPlayerValue = 'bot'
-    }
-    else {
-      noPlayerValue = 'none'
-    }
-    const playerIDs = []
-    playerIDs.push(player1ID)
-    if (req.body.playerIDs.length > 0) {
-    playerIDs.push([...req.body.playerIDs])
-    const isGameReady = false
-  }
-  else {
-    const isGameReady = true
-  }
-    const newGame = {
-      gameState: {
-        playerCount,
-        botSetting: noPlayerValue,
-        isGameReady,
-      },
-      player1ID,
-      player2ID: playerIDs[1] || noPlayerValue,
-      player3ID: playerIDs[2] || noPlayerValue,
-      player4ID: playerIDs[3] || noPlayerValue,
-    };
-     try {
-      // run the DB INSERT query
-      // const game = await db.Game.create(newGame)
-      console.log(game);
-      // need to send invites to players
-      res.send(game)
-     } catch (error) {
-       res.status(500).send(error);
-     }
-  }
-
-  // const sendInvite = async(req,res) => {
-  //   const invites = await
-  // }
 
   const getGames = async(req,res) => {
     // const game = await db.Game.findByPk(req.params.id);
@@ -168,8 +129,8 @@ export default function initGamesController(db) {
         [Op.or]: [
           { userId: playerID},
           { player2_id: playerID },
-          // { player3_id: playerID },
-          // { player4_id: playerID },
+          { player3_id: playerID },
+          { player4_id: playerID },
         ]
       }
     })
@@ -177,34 +138,44 @@ export default function initGamesController(db) {
     game.forEach((game) => {
       gameIDs.push(game.id)
     })
-    //player clicks on invite
-    // if (req.body.invite === 'rejected') {
-    //   game
-    // }
-    //player refuses an invite
-    //replaced by bot or null depending on game.gameState.botSetting
     res.send(gameIDs)
   }
 
-  const joinGame = async(req,res) => {
+  const joinGame = async (req, res) => {
+    const gameID = req.params.gameid
+    res.cookie('gameID', gameID)
+    res.redirect('/games')
+  }
+
+  const renderGame = async(req,res) => {
     const gameID = req.params.gameid
     const game = await db.Game.findOne({
       where: {
         id: gameID
       }
     })
-          res.cookie('gameID', game.id)
-          let playerID = 0
+    res.cookie('gameID', game.id)
+    let playerID = 0
     if (Number(req.cookies.id) === game.userId) {
       playerID = 1
     }
     else if (Number(req.cookies.id) === game.player2Id){
       playerID = 2
     }
+    else if (Number(req.cookies.id) === game.player3Id){
+      playerID = 3
+    }
+    else if (Number(req.cookies.id) === game.player4Id){
+      playerID = 4
+    }
+    console.log(game)
+    console.log(Number(req.cookies.id))
+    console.log(playerID)
     if (playerID !== 0) {
  res.cookie('playerID', playerID)
       res.send({
         playerHandData: game.gameState.players[playerID-1].playerHand,
+        playerID,
         playerViewablePileData: game.gameState.players[playerID-1].playerViewablePile,
         currentPlayer: game.gameState.currentTurn,
         gamePhase: game.gamePhase
@@ -218,74 +189,50 @@ export default function initGamesController(db) {
     // deal out a new shuffled deck for this game.
     let cardDeck = shuffleCards(makeDeck());
     // to allow 4 max, to be taken from game settings
-    const playerCount = 2;
+    const playerCount = req.body.noOfPlayers;
+    const invitedPlayers = req.body.invitedPlayersIDs
     // more than 2 players means 2x decks
     if(playerCount > 2) {
-      cardDeck = [shuffleCards(makeDeck()), cardDeck]
+      cardDeck.push(...shuffleCards(makeDeck()))
     }
+    console.log(cardDeck.length)
     const player1 = await db.User.findOne({
       where: {
         id: req.cookies.id,
       },
     });
 
-    // need to implement invite sending functionality
-    const players = await db.User.findAll();
-
-    let randomID = 0;
-    //refactor this, allow for bots plus human players
-    let diffPlayer = false;
-    while (!diffPlayer) {
-      randomID = Math.floor(Math.random() * players.length) + 1;
-      if (randomID !== req.cookies.id) {
-        diffPlayer = true;
-      }
-    }
-    const player2 = await db.User.findOne({
-      where: {
-        id: randomID,
-      },
-    });
-
-      const playerPile = [];
-      const playerViewablePile = [];
-      const player2Pile = [];
-      const player2ViewablePile = [];
-      const playerHand = [];
-      const player2Hand = [];
+      const players = []
 
       //to create helper function for each player/bot
-      for (let i = 0; i < 3; i+= 1) {
-        playerPile.push(cardDeck.pop())
-        player2Pile.push(cardDeck.pop())
-        playerViewablePile.push(cardDeck.pop())
-        player2ViewablePile.push(cardDeck.pop())
-        playerHand.push(cardDeck.pop())
-        player2Hand.push(cardDeck.pop())
+      for (let i = 0; i < playerCount; i+= 1) {
+        const playerPile = [];
+        const playerViewablePile = [];
+        const playerHand = [];
+        playerPile.push(cardDeck.pop(),cardDeck.pop(),cardDeck.pop())
+        playerViewablePile.push(cardDeck.pop(),cardDeck.pop(),cardDeck.pop())
+        playerHand.push(cardDeck.pop(),cardDeck.pop(),cardDeck.pop())
+        players.push({
+          playerHand: playerHand,
+          playerViewablePile: playerViewablePile,
+          playerPile: playerPile
+        })
       }
+
 
       const newGame = {
         noOfPlayers: playerCount,
         gameState: {
           cardDeck,
-          players: [
-          {
-            playerHand,
-            playerPile,
-          playerViewablePile,
-          },
-          {
-          playerHand: player2Hand,
-          playerPile: player2Pile,
-          playerViewablePile: player2ViewablePile,
-          },
-          ],
+          players,
           currentTurn: 1,
-          playZone: []
+          playZone: [],
         },
         gamePhase: 'swap',
         userId: player1.id,
-        player2Id: player2.id,
+        player2Id: invitedPlayers[0],
+        player3Id: invitedPlayers[1],
+        player4Id: invitedPlayers[2],
       }
       const game = await db.Game.create(newGame);
       // send the new game back to the user.
@@ -296,16 +243,11 @@ export default function initGamesController(db) {
       // don't send information about their whole pile
       const playerViewablePileData = playerDetails.playerViewablePile
       const playerHandData = playerDetails.playerHand
-      console.log(playerViewablePileData)
       // to send playerDetails instead of all cards
-      res.cookie('gameID', game.id)
       res.cookie('playerID', 1)
       res.send({
-        currentPlayer: 1,
-        id: game.id,
-        playerViewablePileData,
-        playerHandData,
-      });
+        gameID: game.id
+      })
     } catch (error) {
       res.status(500).send(error);
     }
@@ -356,7 +298,6 @@ else{
         playZone: []
       }
     })
-    console.log(game)
     // to change to 4 or no of players
     if (game.gameState.currentTurn === game.noOfPlayers) {
             await game.update({
@@ -425,7 +366,6 @@ else{
         id: req.cookies.gameID,
       }
     })
-    console.log('game')
     const deck = game.gameState.cardDeck
     const playerID = req.cookies.playerID
     const newPlayZone = []
@@ -460,27 +400,39 @@ else{
       }
     })
     let playerID = Number(req.cookies.id)
-    console.log(playerID)
     if (playerID === game.userId) {
       playerID = 1
     }
     else if (playerID === game.player2Id){
       playerID = 2
     }
-    console.log(playerID)
     // else if (playerID === game.player3Id){
     // playerID = 3
     // }
     // else if (playerID === game.player4Id){
     // playerID = 4
     // }
+    const allPlayerHands = []
+    console.log(game.gameState.players)
+      game.gameState.players.forEach((player, i) => {
+        if (player !== null) {
+        allPlayerHands.push({
+          hand: player.playerHand.length,
+          pile: player.playerViewablePile,
+          playerIDOfHand: i+1
+        })
+      }
+      })
+      allPlayerHands.splice(playerID-1, 1)
     res.send({
         id: game.id,
         playerID,
         playerHandData: game.gameState.players[playerID-1].playerHand,
         playerViewablePileData: game.gameState.players[playerID-1].playerViewablePile,
         playZone: game.gameState.playZone,
+        cardDeckLength: game.gameState.cardDeck.length,
         currentPlayer: game.gameState.currentTurn,
+        otherPlayerCards: allPlayerHands
       })
     }
     catch (error) {
@@ -514,6 +466,17 @@ else{
       else {
         currentTurn += 1
       }
+      const allPlayerHands = []
+      game.gameState.players.forEach((player, i) => {
+        if (player !== null) {
+        allPlayerHands.push({
+          hand: player.playerHand.length,
+          pile: player.playerViewablePile,
+          playerIDOfHand: i+1
+        })
+      }
+      })
+      allPlayerHands.splice(playerIDOfCurrent-1, 1)
       // turn is valid
       // update the game with the new info
         await game.update({
@@ -531,7 +494,8 @@ else{
         playerHandData: game.gameState.players[playerIDOfCurrent-1].playerHand,
         playerViewablePileData: game.gameState.players[playerIDOfCurrent-1].playerViewablePile,
         playZone: [],
-        cardDeckLength: game.gameState.cardDeck.length
+        cardDeckLength: game.gameState.cardDeck.length,
+        otherPlayerCards: allPlayerHands
       });
   }
 
@@ -541,7 +505,7 @@ else{
   // on first turn(maybe send the req after the end of the swap round), place 1 card face up on the playZone from deck
   const playRound = async (req, res) => {
 
-    // try {
+    try {
       // get the game by the ID passed in the request
           const game = await db.Game.findOne({
       where: {
@@ -598,26 +562,30 @@ else{
         playingGroup = playerHand
       }
           const positionsToSplice = []
-            playingGroup.forEach((card, i) => {
-              console.log(card)
-              if (card.rank === cardPlayed.rank) {
-                playZoneCurrent.push(card)
+          let noOfDuplicatesPlayed = 0
+          let i = 0
+          while (noOfDuplicatesPlayed < req.body.playedDuplicates) {
+            if (playingGroup[i].rank === cardPlayed.rank) {
                 positionsToSplice.push(i)
-              }
-            })
+                noOfDuplicatesPlayed += 1
+            }
+            i += 1
+          }
           let noOfTimesSpliced = 0
           positionsToSplice.forEach((position) => {
-            playingGroup.splice((position-noOfTimesSpliced), 1)
+            const splicedCard = playingGroup.splice((position-noOfTimesSpliced), 1)
             noOfTimesSpliced += 1
+            playZoneCurrent.push(...splicedCard)
           })
+          console.log(playZoneCurrent)
       if(playerHand.length === 0) {
         playerViewablePile = playingGroup
       }
       else {
         playerHand = playingGroup
       }
-        }
-        else {
+    }
+    else {
       if(playerHand.length === 0) {
         playerViewablePile.splice(req.body.cardPosition, 1)
       }
@@ -657,9 +625,26 @@ else{
               playZone: game.gameState.playZone
             }
           })
-          
+          // if the number of players that have won are 1 less than no of players. game ends. enpty out html of game
+          let noOfWinners = 0
+          for (let i = 0; i < game.noOfPlayers; i+= 1) {
+            if (game.gameState.players[i].playerPile.length === 0 && game.gameState.players[i].playerViewablePile.length === 0 && game.gameState.players[i].playerHand.length === 0) {
+              noOfWinners += 1
+            }
+          }
+          console.log(noOfWinners)
+          if (noOfWinners === game.noOfPlayers - 1) {
+            await game.update({
+              gamePhase: 'ended'
+            })
+            res.send('ended')
+            return
+          }
+          // else skip their turn
+          else {
           res.send('skip')
           return
+          }
         }
         // if there is at least 1 card in the pile, the player can use it
         else if (playerViewablePile.length === 0) {
@@ -695,6 +680,21 @@ else{
         });
       // send the updated game back to the user.
       // dont include the deck so the user can't cheat
+      // send back other players piles and HAND LENGTH (not hand itself)
+      // what will be the orientation for 4 players?
+      // to go clockwise? 1 is bottom
+      const allPlayerHands = []
+       game.gameState.players.forEach((player, i) => {
+        if (player !== null) {
+        allPlayerHands.push({
+          hand: player.playerHand.length,
+          pile: player.playerViewablePile,
+          playerIDOfHand: i+1
+        })
+      }
+      })
+      allPlayerHands.splice(playerIDOfCurrent-1, 1)
+      console.log(game.gameState.players[playerIDOfCurrent-1].playerPile)
       res.send({
         id: game.id,
         currentPlayer: currentTurn,
@@ -702,11 +702,13 @@ else{
         playerViewablePile: game.gameState.players[playerIDOfCurrent-1].playerViewablePile,
         playZone: playZoneCurrent,
         cardDeckLength: game.gameState.cardDeck.length,
+        otherPlayerCards: allPlayerHands
       });
     }
-    // } catch (error) {
-    //   res.status(500).send(error);
-    // }
+    catch (error) {
+      res.status(500).send(error);
+    }
+  }
     const skipRound = async(req,res) => {
               const game = await db.Game.findOne({
       where: {
@@ -721,17 +723,18 @@ else{
       const playerData = game.gameState.players
       let counter = 0
       let idiotID = 0
-      for (let i = 0; i < playerData.length; i+=1) {
-        if (playerData[i].playerHand.length === 0 && playerData[i].playerVisiblePile.length === 0 && playerData[i].playerPile.length === 0) {
-          counter +=1
+      for (let i = 0; i < game.noOfPlayers; i+=1) {
+        if (playerData[i].playerHand.length === 0 && playerData[i].playerViewablePile.length === 0 && playerData[i].playerPile.length === 0) {
+          counter += 1
         }
         else {
           idiotID = i + 1
         }
       }
       // idiot found!
-      if (counter === (playerData.length - 1)) {
-        res.send(idiotID)
+      if (counter === (game.noOfPlayers - 1)) {
+        console.log(idiotID)
+        res.send({idiotID})
       }
       else {
         // no idiot
@@ -743,27 +746,54 @@ else{
           playZone: game.gameState.playZone
           }
         })
-        currentTurn +
-        res.send(currentTurn)
+        currentTurn += 1
+        res.send({currentTurn})
       }
   };
 
   const refreshData = async (req,res) => {
-                  const game = await db.Game.findOne({
+    const game = await db.Game.findOne({
       where: {
         id: req.cookies.gameID,
       }
     })
     const playerData = game.gameState.players[req.cookies.playerID - 1]
+    if (game.gamePhase === 'ended') {
+      res.send ('ended')
+      return
+    }
+    else if (game.gamePhase === 'swap') {
+      res.send ({
+      playerHandData: playerData.playerHand,
+      playerViewablePileData: playerData.playerViewablePile,
+      currentPlayer: game.gameState.currentTurn,
+      playerID: req.cookies.id,
+      gamePhase: game.gamePhase
+      })
+      return
+    }
+    else {
+    const allPlayerHands = []
+      game.gameState.players.forEach((player, i) => {
+        if (player !== null) {
+        allPlayerHands.push({
+          hand: player.playerHand.length,
+          pile: player.playerViewablePile,
+          playerIDOfHand: i+1
+        })
+      }
+      })
+      allPlayerHands.splice(req.cookies.playerID-1, 1)
     res.send ({
       playerHandData: playerData.playerHand,
       playerViewablePileData: playerData.playerViewablePile,
       currentPlayer: game.gameState.currentTurn,
       playZone: game.gameState.playZone,
-      cardDeckLength: game.gameState.cardDeck.length
+      cardDeckLength: game.gameState.cardDeck.length,
+      otherPlayerCards: allPlayerHands,
     })
+    }
   }
-
   // return all functions we define in an object
   // refer to the routes file above to see this used
   return {
@@ -771,6 +801,7 @@ else{
     create,
     getGames,
     joinGame,
+    renderGame,
     joinCurrentGame,
     takePile,
     swapRound,
@@ -779,4 +810,4 @@ else{
     refreshData,
     index,
   };
-  }
+}

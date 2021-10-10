@@ -1,0 +1,129 @@
+      html {
+        background-color: #d3d366;
+        font-family: gameFont;
+      }
+
+      @font-face {
+        font-family: gameFont;
+        src: url(/font/Planewalker.otf);
+      }
+      
+      .btn:focus {
+        background: linear-gradient(#152b40, #152b40);
+        color: blue;
+      }
+
+      .button-selected {
+        border: 4px solid red;
+      }
+
+      .cardDiv {
+        margin-bottom: 10px;
+        height: 30%;
+        width: 30%;
+        display: inline;
+      }
+
+      .cardImage {
+        height: 20%;
+        width: 20%;
+      }
+
+      .deckImage {
+        height: 100%;
+        width: 40%;
+      }
+
+      .swapImage {
+        height: 100%;
+        width: 20%;
+      }
+
+      .oppCardImage {
+        width: 20%;
+      }
+
+      #game-container {
+        font-family: gameFont;
+        background-color: antiquewhite;
+        display: flex;
+        justify-content:center;
+        margin-top: 5%;
+      }
+
+      .pileDiv {
+        display: flex;
+        justify-items: center;
+        align-items: center;
+        width: 50%;
+      }
+
+      .playZoneDiv {
+        justify-content: center;
+        width: 30%;
+        height: 30%;
+      }
+
+      :root {
+        --rowNum: 5;
+        --colNum: 5;
+      }
+
+      #board-container {
+        font-family: gameFont;
+        display: grid;
+        grid-template-columns: auto auto auto auto auto;
+        grid-template-rows: auto auto auto auto auto;
+        grid-template-areas:
+          '. player0Pile player0Hand player0Hand .'
+          'player1Pile . deck . player2Pile'
+          'player1Hand . playZone . player2Hand'
+          'player1Hand . . . player2Hand'
+          '. pile-container hand-container hand-container .';
+        background-color: #efefc8;
+        padding: 3%;
+      }
+      #board-container > div {
+        padding: 3%;
+      }
+
+      #player0Pile {
+        grid-area: player0Pile;
+      }
+
+      #player0Hand {
+        grid-area: player0Hand;
+      }
+
+      #hand-container {
+        grid-area: hand-container;
+      }
+
+      #pile-container {
+        grid-area: pile-container;
+      }
+
+      #deck {
+        grid-area: deck;
+        height: 100%;
+        width: 100%;
+      }
+
+      #playZoneDiv {
+        grid-area: playZone;
+        height: 100%;
+        width: 100%;
+      }
+
+      .playZoneIMG {
+        height: 100%;
+        width: 70%;
+      }
+
+      #refresh-button {
+        margin-left: 5%;
+      }
+
+      #game-info {
+        margin-right: 3%
+      }

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Idiot</title>
+      <link href ="/index.css" rel="stylesheet" type= "text/css" media="screen">
+      <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+</head>
+<body>
+  <div class="wrapper fadeInDown">
+  <div id="formContent">
+    <!-- Tabs Titles -->
+
+    <!-- Icon -->
+    <div class="fadeIn first">
+      <h1>Idiot</h1>
+    </div>
+
+    <!-- Login Form -->
+    <form id = "loginForm" action = "/login" method = "POST">
+      <input type="text" id="login" class="fadeIn second" name="loginEmail" placeholder="email" required>
+      <input type="text" id="password" class="fadeIn third" name="password" placeholder="password" required>
+      <input type="submit" class="fadeIn fourth" id = "loginButton" value="Log In">
+    </form>
+
+    <form id = "regForm" action = "/register" method = "POST" style = "display: none;">
+      <input type="text" id="register" class="fadeIn second" name="registerEmail" placeholder="email" required>
+      <input type="text" id="username" class="fadeIn second" name="username" placeholder="username" required>
+      <input type="text" id="password" class="fadeIn third" name="password" placeholder="password" required>
+      <input type="submit" class="fadeIn fourth" id = "regButton" value="Register">
+    </form>
+
+    <div id="formFooter">
+      <a class="underlineHover" id ="init-reg" href="#">Register</a>
+      <a class="underlineHover" id ="init-login" href="#" style = "display: none;">Login</a>
+    </div>
+
+  </div>
+</div>
+<script src="/login.js"></script>
+</body>
+</html>

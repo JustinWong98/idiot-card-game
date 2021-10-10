@@ -15,27 +15,31 @@ const getHash = (input) => {
   return shaObj.getHash('HEX');
 };
 export default function initUsersController(db) {
+  const index = async (req, res) => {
+    res.render('login')
+  }
   const register = async (req, res) => {
     console.log(req.body)
     try {
       const findExistingEmail = await db.User.findOne({
         where: {
-          email: req.body.email,
+          email: req.body.registerEmail,
         },
       });
+      console.log(findExistingEmail)
       if (findExistingEmail !== null) {
         res.send('emailExists');
       }
       else {
         const hashedPassword = getHash(req.body.password);
         const newUser = await db.User.create({
-          email: req.body.email,
+          email: req.body.registerEmail,
           username: req.body.username,
           password: hashedPassword,
         });
         res.cookie('loggedIn', hashedPassword);
         res.cookie('id', newUser.id);
-        res.send('userCreated');
+        res.redirect('lobby');
       }
     } catch (error) {
       console.log(error);
@@ -48,7 +52,7 @@ export default function initUsersController(db) {
       const hashedPassword = getHash(req.body.password);
       const findExistingUser = await db.User.findOne({
         where: {
-          email: req.body.email,
+          email: req.body.loginEmail,
           password: hashedPassword,
         },
       });
@@ -58,17 +62,41 @@ export default function initUsersController(db) {
       else {
         res.cookie('loggedIn', hashedPassword);
         res.cookie('id', findExistingUser.id);
-        res.send('loggedIn');
+        res.redirect('lobby');
       }
     }
     catch (error) {
       res.send(error);
     }
   };
+  const getLobby = async (req, res) => {
+    try {
+      res.render('lobby')
+    }
+    catch (error) {
+      res.send(error);
+    }
+  }
+  const getPlayers = async (req, res) => {
+    try{
+      const currentPlayerID = req.cookies.id
+      const allPlayers = await db.User.findAll()
+      for (let i = 0; i < allPlayers.length; i += 1) {
+        console.log(allPlayers[i].id)
+        if (allPlayers[i].id === Number(currentPlayerID)) {
+          allPlayers.splice(i, 1)
+        }
+      }
+      res.send(allPlayers)
+    }
+    catch (error) {
+      res.send(error);
+    }
+  }
   const checkCookies = async (req, res) => {
     try {
       if (req.cookies.loggedIn === undefined) {
-        res.send('renderLogin');
+        res.redirect('login')
       }
       else {
         const cookieQuery = await db.User.findOne({
@@ -77,10 +105,10 @@ export default function initUsersController(db) {
           },
         });
         if (cookieQuery === null) {
-          res.send('renderLogin');
+          res.redirect('login')
         }
         else {
-          res.send('renderGame');
+          res.send('render')
         }
       }
     }
@@ -92,5 +120,8 @@ export default function initUsersController(db) {
     register,
     login,
     checkCookies,
+    index,
+    getLobby,
+    getPlayers
   };
 }

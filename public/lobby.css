@@ -1,0 +1,45 @@
+html {
+  background-color: #f5e9dc;
+}
+
+@font-face {
+  font-family: gameFont;
+  src: url(/font/Planewalker.otf);
+}
+
+body {
+  background-color: #f5e9dc;
+}
+.gameDiv {
+  justify-content:center;
+  border-style: inset;
+  display: flex;
+  justify-content: space-between;
+}
+
+#lobbyDiv {
+  font-family: gameFont;
+  background-color: #f5f5dc;
+  padding: 2% 10% 2% 15%;
+}
+
+#firstDiv {
+  font-family: gameFont;
+  background-color: #f5f5dc;
+  display: flex;
+  justify-content:center;
+  align-items: center;
+  flex-direction: column;
+  margin: 5% 0% 0% 0%;
+}
+
+#firstDiv > button {
+  margin: 2% 40% 2% 40%;
+}
+
+#firstDiv > input {
+  margin: 2% 45% 2% 45%;
+}
+#firstDiv > select {
+  margin: 2% 40% 2% 40%;
+}

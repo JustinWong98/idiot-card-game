@@ -30,6 +30,20 @@ export default function initGameModel(sequelize, DataTypes) {
           key: 'id',
         }
       },
+      player3Id: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'users',
+          key: 'id',
+        }
+      },
+      player4Id: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'users',
+          key: 'id',
+        }
+      },
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE,

@@ -61,6 +61,20 @@ module.exports = {
           key: 'id',
         }
       },
+      player3_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'users',
+          key: 'id',
+        }
+      },
+      player4_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'users',
+          key: 'id',
+        }
+      },
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
